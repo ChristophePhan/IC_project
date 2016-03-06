@@ -71,7 +71,9 @@ public class IC {
             proper = proper.replace(")","_");
             proper = proper.replace(".","_");
             proper = proper.replaceAll("[0-9]*", "");
+            proper = proper.replaceAll("ü", "u");
             label = label.replaceAll("[0-9]*", "");
+            label = label.replaceAll("ü", "u");
             System.out.println(proper);
             String queryDBPedia = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
                 + "SELECT DISTINCT ?label WHERE {"
