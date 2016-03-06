@@ -5,31 +5,19 @@
  */
 package com.gdf.ic_project;
 
-import java.io.IOException;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
-
 /**
  *
  * @author chris
  */
 public class Main {
-    public static void main(String[] args) throws IOException{
-        //String dbpedia = "doid2.owl";
-        String doid = "doid.owl";
-        IC ic = new IC();
-        //Model m1 = ic.readFile(dbpedia);
-        Model m2 = ic.readFile(doid);
+    public static void main(String[] args) {
+
+        String bioApikey = "b905a8d6-9ca8-44be-8613-f3ef1fdab3a9";
+        String bioService = "http://sparql.bioontology.org/sparql";
+        String dbpediaService = "http://dbpedia.org/sparql";
         
-        String queryString = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>"
-                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-                + "SELECT ?s ?label"
-                + "WHERE {"
-                + "   ?s a owl:Class ."
-                + "   ?s rdfs:label ?label ."
-                + "}";
-   
-        ResultSet result = ic.sparqlQuert(m2, queryString);
-        System.out.println(result.next());
+        String bioOnto = "http://bioportal.bioontology.org/ontologies/DOID";
+        IC ic = new IC(bioApikey, bioService, dbpediaService, bioOnto);
+        ic.matchingEntities();
     }
 }

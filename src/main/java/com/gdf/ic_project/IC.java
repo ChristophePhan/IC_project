@@ -5,53 +5,89 @@
  */
 package com.gdf.ic_project;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
+import java.util.ArrayList;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.util.FileManager;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
  *
  * @author chris
  */
 public class IC {
-
-    public Model readFile(String inputFileName) throws IOException {
-        // create an empty model
-        Model model = ModelFactory.createDefaultModel();
-        
-        // use the FileManager to find the input file
-        try (InputStream in = FileManager.get().open(inputFileName)) {
-            if (in == null) {
-                throw new IllegalArgumentException("File: " + inputFileName + " not found");
-            }
-        }
-        // read file
-        return model.read(inputFileName);
+    
+    private final String bioApikey;
+    private final String bioService;
+    private final String dbpediaService;
+    private final String bioOnto;
+    
+    public IC(String bioApikey, String bioService, String dbpediaService, String bioOnto){
+        this.bioApikey = bioApikey;
+        this.bioService = bioService;
+        this.dbpediaService = dbpediaService;
+        this.bioOnto = bioOnto;
     }
 
-    public ResultSet sparqlQuert(Model model, String queryString) throws FileNotFoundException, IOException {
-
+    public QueryEngineHTTP sparqlBioQuery(String queryString) {
         Query query = QueryFactory.create(queryString);
-
-        ResultSet results;
-        // Execute the query and obtain results
-        try (QueryExecution qe = QueryExecutionFactory.create(query, model)) {
-            results = qe.execSelect();
-            // Output query results
-            ResultSetFormatter.out(System.out, results, query);
+        QueryEngineHTTP qexec = QueryExecutionFactory.createServiceRequest(this.bioService, query);
+        qexec.addParam("apikey", this.bioApikey);
+        //ResultSet results = qexec.execSelect();
+        return qexec;
+    }
+    
+    public QueryEngineHTTP sparqlDbpediaQuery(String queryString){
+        Query query = QueryFactory.create(queryString);
+        QueryEngineHTTP qexec = QueryExecutionFactory.createServiceRequest(this.dbpediaService, query);
+        return qexec;
+    }
+    
+    public void matchingEntities(){
+        String queryBio = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>"
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                + "SELECT *"
+                + "FROM <"+bioOnto+">"
+                + "WHERE {"
+                + "   ?s rdfs:label ?label ."
+                + "}";
+        
+        QueryEngineHTTP qexec = this.sparqlBioQuery(queryBio);
+        ResultSet res = qexec.execSelect();
+        ArrayList<String> labels = new ArrayList();
+        while(res.hasNext()){
+            labels.add(res.next().get("label").toString());
+            //System.out.println(res.next().get("label"));
         }
-        return results;
+        qexec.close();
+        int number = 0;
+        for(String label: labels){
+            String proper = label.replace(" ", "_");
+            proper = proper.replace("'","_");
+            proper = proper.replace(",","_");
+            proper = proper.replace("/","_");
+            proper = proper.replace("(","_");
+            proper = proper.replace(")","_");
+            proper = proper.replace(".","_");
+            proper = proper.replaceAll("[0-9]*", "");
+            label = label.replaceAll("[0-9]*", "");
+            System.out.println(proper);
+            String queryDBPedia = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                + "SELECT DISTINCT ?label WHERE {"
+                + "?s rdfs:label ?label ."
+                + "FILTER (lang(?label) = 'en')."
+                + "?label <bif:contains> \'"+proper+"\' ."
+                + "FILTER regex(str(?label), \"^"+label+"$\")."
+                + "}";
+            QueryEngineHTTP qexec2 = this.sparqlDbpediaQuery(queryDBPedia);
+            ResultSet res2 = qexec2.execSelect();
+            if(res2.hasNext()){
+                number++;
+                System.out.println(res2.next().get("label")+" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            }
+            qexec2.close();
+            System.out.println("--------------------------------------------------");
+        }
     }
 }
