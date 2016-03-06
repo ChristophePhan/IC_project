@@ -78,8 +78,9 @@ public class IC {
             proper = proper.replace("+", "_");
             proper = proper.replace(";", "_");
             label = label.replace("ü", "u");
-            System.out.println(proper);
-            System.out.println(label+" bbbbbbbbbbbbb");
+            label = label.replace("+", ".");
+            //System.out.println(proper);
+            //System.out.println(label+" bbbbbbbbbbbbb");
             String queryDBPedia = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
                 + "SELECT DISTINCT ?label WHERE {"
                 + "?s rdfs:label ?label ."
@@ -90,14 +91,13 @@ public class IC {
             QueryEngineHTTP qexec2 = this.sparqlDbpediaQuery(queryDBPedia);
             ResultSet res2 = qexec2.execSelect();
             if(res2.hasNext()){
-                number++;
-                System.out.println(res2.next().get("label")+" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                number = number+1;
+                //System.out.println(res2.next().get("label")+" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             }
             qexec2.close();
-            System.out.println("--------------------------------------------------");
+            //System.out.println("--------------------------------------------------");
         }
-        double average = number/labels.size();
-        average = average*100;
+        double average = ((double)number/(double)labels.size())*100.0;
         System.out.println("Pourcentage de correspondance exacte trouvé sur DBPedia par rapport à l'ontologie DOID : "+ average);
     }
 }
