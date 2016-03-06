@@ -20,7 +20,6 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 
 /**
@@ -34,6 +33,9 @@ public class Statistic {
     private RequestManager _rm;
     private String _doid;
     private Model _bpModel;
+    private int _limit;
+    
+    private Long _startTime;
     
     // CONSTRUCTOR
     
@@ -47,6 +49,7 @@ public class Statistic {
             this._rm = new RequestManager();
             this._doid = "doid.owl";
             this._bpModel = this._rm.readFile(this._doid);
+            this._limit = 100;
             
         } catch (IOException ex) {
             Logger.getLogger(Statistic.class.getName()).log(Level.SEVERE, null, ex);
@@ -58,9 +61,12 @@ public class Statistic {
     
     /**
      * Test human diceases mathing beetween BioPortal and DBpedia
+     * /!\ LIMIT to first results !
      * @throws IOException 
      */
     public void matchDiceases() throws IOException {
+        
+        this.setStartTime(System.currentTimeMillis());
         
         // BioPortal request
         String queryBP = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>\n" +
@@ -69,7 +75,7 @@ public class Statistic {
                 "SELECT DISTINCT ?label\n" +
                 "WHERE {\n" +
                 "   ?root rdfs:label ?label .\n" +
-                "}";
+                "} LIMIT " + this.getLimit();
         //ResultSet resultBP = this.getRm().bioPortalSparqlQuery(this.getBpModel(), queryBP);
         
         // Matching Map
@@ -87,9 +93,12 @@ public class Statistic {
                 QuerySolution qs = resultBP.nextSolution();
                 String dicease = qs.getLiteral("?label").toString()
                         .replaceAll("@en", "").toUpperCase()
-                        .replaceAll("\\W", "")
-                        .replaceAll(" ", " AND ");
-
+                        .replaceAll(" ", " AND ")
+                        .replaceAll("'", "")
+                        .replaceAll(",", "")
+                        .replaceAll("[0-9]","")
+                        .replaceAll("-", "");
+                
                 // DBpedia request
                 String queryDBP = "PREFIX dbo:<http://dbpedia.org/ontology/>\n" +
                     "PREFIX : <http://dbpedia.org/resource/>\n" +
@@ -125,7 +134,7 @@ public class Statistic {
             
             // Print result
             this.printMatchDiceasesResult(matchMap);
-        
+            
         }
         
     } // matchDiceases()
@@ -137,6 +146,7 @@ public class Statistic {
     private void printMatchDiceasesResult(Map results) {
         
         int sum = 0;
+        int sumNullResults = 0;
         
         System.out.println("\n----------------------------------------------------------");
         System.out.println("- Correspondance entre les résultst BioPortal et DBpedia -");
@@ -155,13 +165,16 @@ public class Statistic {
                     nbResultsFound++;
                     resultsFound += resultsIterator.next();
                     
-                    if (!resultsIterator.hasNext()) {
+                    if (resultsIterator.hasNext()) {
                         resultsFound += ", ";
                     }
                     
             }
             resultsFound += "]";
             sum += nbResultsFound;
+            if (nbResultsFound == 0) {
+                sumNullResults++;
+            }
             
             System.out.println(pair.getKey() + " (BioPortal) | " + nbResultsFound + " résultats correspondants (DBpedia) | Résultats " + resultsFound);
             
@@ -171,9 +184,14 @@ public class Statistic {
         if (results.size() > 0) {
             average = sum/results.size();
         }
-        System.out.println("\nNombre moyen de réultats DBpedia trouvés par rapport aux données BioPortal : " + average + "\n");
+        System.out.println("\nNombre de résultats testés : " + this.getLimit());
+        System.out.println("Nombre moyen de réultats DBpedia trouvés par rapport aux données BioPortal : " + average);
+        System.out.println("Nombre de résultats n'ayant aucune correspondance : " + sumNullResults);
         
-        System.out.println("----------------------------------------------------------\n");
+        // ElapsedTime
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - this.getStartTime();
+        System.out.println("Temps d'éxécution (matchDiseases function) : " + (elapsedTime*0.001) + " s");
         
     } // printMatchDiceasesResult(Map results) 
     
@@ -201,6 +219,22 @@ public class Statistic {
 
     public void setBpModel(Model _bpModel) {
         this._bpModel = _bpModel;
+    }
+
+    public Long getStartTime() {
+        return _startTime;
+    }
+
+    public void setStartTime(Long _startTime) {
+        this._startTime = _startTime;
+    }
+
+    public int getLimit() {
+        return _limit;
+    }
+
+    public void setLimit(int _limit) {
+        this._limit = _limit;
     }
     
 } // class Statistic
