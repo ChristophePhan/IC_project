@@ -25,8 +25,8 @@ public class Main {
         //IC ic = new IC(bioApikey, bioService, dbpediaService, bioOnto);
         //ic.matchingEntities();
 
-        Statistic s = new Statistic();
-        s.matchDiceases();
+//        Statistic s = new Statistic();
+//        s.matchDiceases();
     }
 
     /**
