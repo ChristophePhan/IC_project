@@ -49,7 +49,7 @@ public class Statistic {
             this._rm = new RequestManager();
             this._doid = "doid.owl";
             this._bpModel = this._rm.readFile(this._doid);
-            this._limit = 100;
+            this._limit = 200;
             
         } catch (IOException ex) {
             Logger.getLogger(Statistic.class.getName()).log(Level.SEVERE, null, ex);
@@ -87,17 +87,27 @@ public class Statistic {
             
             ResultSet resultBP = qe.execSelect();
             
+            int sumNoResults = 0;
+            int sumOfResults = 0;
+            
             while (resultBP.hasNext()) {
+                
+                sumOfResults++;
             
                 // BioPortal dicease found
                 QuerySolution qs = resultBP.nextSolution();
-                String dicease = qs.getLiteral("?label").toString()
+                String dicease = qs.getLiteral("?label").toString().trim()
                         .replaceAll("@en", "").toUpperCase()
+                        .replaceAll("[0-9]","")
+                        .replaceAll("\\s+", " ").trim()
+                        .replaceAll(" AND ", " ")
+                        .replaceAll(" OR ", " ")
                         .replaceAll(" ", " AND ")
+                        .replaceAll("/", " AND ")
                         .replaceAll("'", "")
                         .replaceAll(",", "")
-                        .replaceAll("[0-9]","")
-                        .replaceAll("-", "");
+                        .replaceAll("-", "")
+                        .replaceAll("()", "");
                 
                 // DBpedia request
                 String queryDBP = "PREFIX dbo:<http://dbpedia.org/ontology/>\n" +
@@ -126,6 +136,7 @@ public class Statistic {
 
                 } catch (QueryExceptionHTTP e) {
 
+                    sumNoResults++;
                     System.out.println(service + " is DOWN -> DICEASE : " + dicease);
 
                 }
@@ -133,7 +144,7 @@ public class Statistic {
             }
             
             // Print result
-            this.printMatchDiceasesResult(matchMap);
+            this.printMatchDiceasesResult(matchMap, sumNoResults, sumOfResults);
             
         }
         
@@ -142,8 +153,9 @@ public class Statistic {
     /**
      * Print match diceases results
      * @param results results from BioPortal and DBpedia
+     * @param sumNoResults number of results impossible to test
      */
-    private void printMatchDiceasesResult(Map results) {
+    private void printMatchDiceasesResult(Map results, int sumNoResults, int sumOfResults) {
         
         int sum = 0;
         int sumNullResults = 0;
@@ -184,14 +196,15 @@ public class Statistic {
         if (results.size() > 0) {
             average = sum/results.size();
         }
-        System.out.println("\nNombre de résultats testés : " + this.getLimit());
+        System.out.println("\nNombre de résultats testés : " + sumOfResults);
         System.out.println("Nombre moyen de réultats DBpedia trouvés par rapport aux données BioPortal : " + average);
         System.out.println("Nombre de résultats n'ayant aucune correspondance : " + sumNullResults);
+        System.out.println("Nombre de résultats impossible à tester : " + sumNoResults);
         
         // ElapsedTime
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - this.getStartTime();
-        System.out.println("Temps d'éxécution (matchDiseases function) : " + (elapsedTime*0.001) + " s");
+        System.out.println("\nTemps d'éxécution (matchDiseases function) : " + (elapsedTime*0.001) + " s\n");
         
     } // printMatchDiceasesResult(Map results) 
     
