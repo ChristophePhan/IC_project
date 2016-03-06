@@ -11,7 +11,6 @@ import org.apache.jena.rdf.model.Model;
 
 /**
  * Main
- *
  * @author chris
  */
 public class Main {
@@ -23,12 +22,13 @@ public class Main {
         String dbpediaService = "http://dbpedia.org/sparql";
         String bioOnto = "http://bioportal.bioontology.org/ontologies/DOID";
 
-        IC ic = new IC(bioApikey, bioService, dbpediaService, bioOnto);
-        ic.matchingEntities();
+        //IC ic = new IC(bioApikey, bioService, dbpediaService, bioOnto);
+        //ic.matchingEntities();
 
-//        Statistic s = new Statistic();
-//        s.matchDiceases();
-    }
+        Statistic s = new Statistic();
+        s.matchDiceases();
+        
+    } // main(String[] args) throws IOException
 
     /**
      * Test BioPortal request
