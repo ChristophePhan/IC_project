@@ -17,8 +17,19 @@ public class Main {
     
     public static void main(String[] args) throws IOException {
         
+        Statistic s = new Statistic();
+        s.matchDiceases();
+        
+    } // main(String[] args) throws IOException
+    
+    /**
+     * Test BioPortal request
+     * @throws IOException 
+     */
+    public static void testBioPortal() throws IOException {
+        
         String doid = "doid.owl";
-        IC ic = new IC();
+        RequestManager ic = new RequestManager();
         Model bpModel = ic.readFile(doid);
         
         String queryBP = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>\n" +
@@ -34,6 +45,16 @@ public class Main {
         System.out.println("-----------------------------------\n");
         ResultSet resultBP = ic.bioPortalSparqlQuery(bpModel, queryBP);
         
+    } // testBioPortal()
+    
+    /**
+     * Test DBpedia request
+     * @throws IOException 
+     */
+    public static void testDBpedia() throws IOException {
+        
+        RequestManager ic = new RequestManager();
+        
         String queryDBP = "PREFIX dbo:<http://dbpedia.org/ontology/>\n" +
                 "PREFIX : <http://dbpedia.org/resource/>\n" +
                 "PREFIX pr:<http://xmlns.com/foaf/0.1/>\n" +
@@ -47,6 +68,6 @@ public class Main {
         System.out.println("-----------------------------------\n");
         ResultSet resultDBP = ic.dbpediaSparqlQuery(queryDBP);
         
-    } // main(String[] args) throws IOException
+    } // testDBpedia()
     
 } // class Main

@@ -24,10 +24,10 @@ import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.apache.jena.util.FileManager;
 
 /**
- * IC
+ * RequestManager
  * @author chris
  */
-public class IC {
+public class RequestManager {
 
     /**
      * Load OWL file from BioPortal
@@ -67,9 +67,11 @@ public class IC {
         ResultSet results;
         // Execute the query and obtain results
         try (QueryExecution qe = QueryExecutionFactory.create(query, model)) {
+            
             results = qe.execSelect();
             // Output query results
             ResultSetFormatter.out(System.out, results, query);
+            
         }
         return results;
         
@@ -87,6 +89,7 @@ public class IC {
         try (QueryExecution qe = QueryExecutionFactory.sparqlService(service, queryString)) {
             
             rs = qe.execSelect();
+            // Output query results
             while (rs.hasNext()) {
 
                 QuerySolution s = rs.nextSolution();
@@ -104,4 +107,4 @@ public class IC {
         
     } // dbpediaSparqlQuery(String queryString)
     
-} // class IC
+} // class RequestManager
