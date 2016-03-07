@@ -18,50 +18,62 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
  */
 public class IC {
     
-    private final String bioApikey;
-    private final String bioService;
-    private final String dbpediaService;
-    private final String bioOnto;
+    private String bioApikey;
+    private String bioService;
+    private String dbpediaService;
+    private String bioOnto;
+    private int limit;
     
     public IC(String bioApikey, String bioService, String dbpediaService, String bioOnto){
         this.bioApikey = bioApikey;
         this.bioService = bioService;
         this.dbpediaService = dbpediaService;
         this.bioOnto = bioOnto;
+        this.limit = 200;
+    }
+    
+    public IC(String bioApikey, String bioService, String dbpediaService, String bioOnto, int limit){
+        this.bioApikey = bioApikey;
+        this.bioService = bioService;
+        this.dbpediaService = dbpediaService;
+        this.bioOnto = bioOnto;
+        this.limit = limit;
     }
 
-    public QueryEngineHTTP sparqlBioQuery(String queryString) {
+    public ResultSet sparqlBioQuery(String queryString) {
         Query query = QueryFactory.create(queryString);
         QueryEngineHTTP qexec = QueryExecutionFactory.createServiceRequest(this.bioService, query);
         qexec.addParam("apikey", this.bioApikey);
-        //ResultSet results = qexec.execSelect();
-        return qexec;
+        ResultSet results = qexec.execSelect();
+        return results;
     }
     
-    public QueryEngineHTTP sparqlDbpediaQuery(String queryString){
+    public ResultSet sparqlDbpediaQuery(String queryString){
         Query query = QueryFactory.create(queryString);
         QueryEngineHTTP qexec = QueryExecutionFactory.createServiceRequest(this.dbpediaService, query);
-        return qexec;
+        ResultSet results = qexec.execSelect();
+        return results;
     }
     
     public void matchingEntities(){
+        long startTime = System.currentTimeMillis();
+        
         String queryBio = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>"
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
                 + "SELECT *"
                 + "FROM <"+bioOnto+">"
                 + "WHERE {"
                 + "   ?s rdfs:label ?label ."
-                + "}";
+                + "} LIMIT" + this.limit;
         
-        QueryEngineHTTP qexec = this.sparqlBioQuery(queryBio);
-        ResultSet res = qexec.execSelect();
+        ResultSet res1 = this.sparqlBioQuery(queryBio);
         ArrayList<String> labels = new ArrayList();
-        while(res.hasNext()){
-            labels.add(res.next().get("label").toString());
+        while(res1.hasNext()){
+            labels.add(res1.next().get("label").toString());
             //System.out.println(res.next().get("label"));
         }
-        qexec.close();
         int number = 0;
+        int noMatch = 0;
         for(String label: labels){
             String proper = label.replace(" ", "_");
             proper = proper.replace("'","_");
@@ -78,8 +90,9 @@ public class IC {
             proper = proper.replace("+", "_");
             proper = proper.replace(";", "_");
             label = label.replace("ü", "u");
-            System.out.println(proper);
-            System.out.println(label+" bbbbbbbbbbbbb");
+            label = label.replace("+", ".");
+            //System.out.println(proper);
+            //System.out.println(label+" bbbbbbbbbbbbb");
             String queryDBPedia = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
                 + "SELECT DISTINCT ?label WHERE {"
                 + "?s rdfs:label ?label ."
@@ -87,17 +100,33 @@ public class IC {
                 + "?label <bif:contains> \'"+proper+"\' ."
                 + "FILTER regex(str(?label), \"^(?i)"+label+"$\")."
                 + "}";
-            QueryEngineHTTP qexec2 = this.sparqlDbpediaQuery(queryDBPedia);
-            ResultSet res2 = qexec2.execSelect();
+            ResultSet res2 = this.sparqlDbpediaQuery(queryDBPedia);
             if(res2.hasNext()){
                 number++;
-                System.out.println(res2.next().get("label")+" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                //System.out.println(res2.next().get("label")+" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            } else {
+                noMatch++;
             }
-            qexec2.close();
-            System.out.println("--------------------------------------------------");
+            //System.out.println("--------------------------------------------------");
         }
-        double average = number/labels.size();
-        average = average*100;
-        System.out.println("Pourcentage de correspondance exacte trouvé sur DBPedia par rapport à l'ontologie DOID : "+ average);
+        double average = ((double)number/(double)labels.size())*100.0;
+        System.out.println("\nPourcentage de correspondance exacte trouvé sur DBPedia par rapport à l'ontologie DOID : "+ average+"%");
+        System.out.println("Nombre de résultats testés : "+ this.limit);
+        /**
+         * /!\ il est possible que le filtre regex ne match pas alors qu'il y a un résultat qui correspond 
+         */
+        System.out.println("Nombre de résultats sans correspondance : "+noMatch);
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("\nTemps d'éxécution (matchingEntities function) : " + (elapsedTime*0.001) + " s\n");
     }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
 }
