@@ -49,7 +49,7 @@ public class Statistic {
             this._rm = new RequestManager();
             this._doid = "doid.owl";
             this._bpModel = this._rm.readFile(this._doid);
-            this._limit = 200;
+            this._limit = 100;
             
         } catch (IOException ex) {
             Logger.getLogger(Statistic.class.getName()).log(Level.SEVERE, null, ex);
@@ -75,8 +75,8 @@ public class Statistic {
                 "SELECT DISTINCT ?label\n" +
                 "WHERE {\n" +
                 "   ?root rdfs:label ?label .\n" +
+                //"}";
                 "} LIMIT " + this.getLimit();
-        //ResultSet resultBP = this.getRm().bioPortalSparqlQuery(this.getBpModel(), queryBP);
         
         // Matching Map
         Map<String,List> matchMap = new HashMap<>();
@@ -118,7 +118,6 @@ public class Statistic {
                     "?s rdfs:label ?label . \n"+
                     "?label <bif:contains> \"" + dicease + "\" .\n"+
                     "}";
-                //ResultSet resultDBP = this.getRm().dbpediaSparqlQuery(queryDBP);
                 List dbpResults = new ArrayList<>();
 
                 // Execute the query and obtain results
