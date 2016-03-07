@@ -115,8 +115,8 @@ public class Statistic {
                     "PREFIX pr:<http://xmlns.com/foaf/0.1/>\n" +
                     "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"+
                     "SELECT DISTINCT ?s ?label WHERE {\n" +                              
-                    "?s rdfs:label ?label . \n"+
-                    "?label <bif:contains> \"" + dicease + "\" .\n"+
+                    "   ?s rdfs:label ?label . \n"+
+                    "   ?label <bif:contains> \"" + dicease + "\" .\n"+
                     "}";
                 List dbpResults = new ArrayList<>();
 
@@ -206,6 +206,76 @@ public class Statistic {
         System.out.println("\nTemps d'éxécution (matchDiseases function) : " + (elapsedTime*0.001) + " s\n");
         
     } // printMatchDiceasesResult(Map results) 
+    
+    /**
+     * Test number diceases missing in BioPortal
+     */
+    public void unknowDicease() {
+        
+        // List of DBpedia diceases
+        List<String> diceases = new ArrayList<>();
+        
+        String queryDBP = "PREFIX dbo:<http://dbpedia.org/ontology/>\n" +
+                    "PREFIX : <http://dbpedia.org/resource/>\n" +
+                    "PREFIX pr:<http://xmlns.com/foaf/0.1/>\n" +
+                    "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"+
+                    "SELECT DISTINCT ?s ?label ?parentLabel WHERE {\n" +                              
+                    "   ?s rdfs:label ?label . \n"+
+                    "   ?s rdfs:subClassOf ?parent .\n" + 
+                    "   ?parent rdfs:label ?parentLabel .\n" +
+                    "   ?parentLabel <bif:contains> \"" + "MALADIE" + "\" .\n" +
+                    "} LIMIT 5";
+        
+        String service = "http://dbpedia.org/sparql";
+        try (QueryExecution qe = QueryExecutionFactory.sparqlService(service, queryDBP)) {
+            
+            ResultSet rs = qe.execSelect();
+            // Output query results
+            while (rs.hasNext()) {
+
+                QuerySolution s = rs.nextSolution();
+                diceases.add(s.getLiteral("?label").toString().replaceAll("@*", ""));
+
+            }
+            
+            // Test dicease in DOID onthologie
+            int resFound = 0;
+            for (String d : diceases) {
+
+                String queryBP = "PREFIX owl:  <http://www.w3.org/2002/07/owl#>\n" +
+                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                        "\n" +
+                        "SELECT DISTINCT ?s ?label\n" +
+                        "WHERE {\n" +
+                        "   ?s rdfs:label ?label . \n"+
+                        "   ?label <bif:contains> \"" + d + "\" .\n"+
+                        "}";
+
+                // Execute the query and obtain results
+                Query query = QueryFactory.create(queryBP);
+                try (QueryExecution qebis = QueryExecutionFactory.create(query, this._bpModel)) {
+
+                    ResultSet resultBP = qebis.execSelect();
+
+                    if (resultBP.hasNext()) { 
+                    
+                        resFound++;
+                        
+                    }
+
+                } catch (QueryExceptionHTTP e) {
+
+                    System.out.println(service + " is DOWN");
+
+                }
+            
+            }
+            
+            System.out.println("\nNombre de maladie DBpedia présente dans le BioPortal : " + resFound + " sur " + diceases.size());
+            
+        }
+        
+    } // unknowDicease()
     
     // GETTER/SETTER
 
