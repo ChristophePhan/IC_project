@@ -10,6 +10,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -28,6 +32,8 @@ import org.apache.jena.util.FileManager;
  * @author chris
  */
 public class RequestManager {
+    
+    // BIOPORTAL
 
     /**
      * Load OWL file from BioPortal
@@ -76,6 +82,8 @@ public class RequestManager {
         return results;
         
     } // bioPortalSparqlQuery(Model model, String queryString) throws FileNotFoundException, IOException
+    
+    // DBPEDIA
     
     /**
      * Return results from DBpedia request

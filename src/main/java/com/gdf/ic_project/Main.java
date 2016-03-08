@@ -17,13 +17,14 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        /*String bioApikey = "b905a8d6-9ca8-44be-8613-f3ef1fdab3a9";
+        String bioApikey = "b905a8d6-9ca8-44be-8613-f3ef1fdab3a9";
         String bioService = "http://sparql.bioontology.org/sparql";
         String dbpediaService = "http://dbpedia.org/sparql";
         String bioOnto = "http://bioportal.bioontology.org/ontologies/DOID";
 
         IC ic = new IC(bioApikey, bioService, dbpediaService, bioOnto);
-        ic.matchingEntities();*/
+        //ic.matchingEntities();
+        //ic.matchingExactEntities();
 
         Statistic s = new Statistic();
         //s.matchDiceases();
